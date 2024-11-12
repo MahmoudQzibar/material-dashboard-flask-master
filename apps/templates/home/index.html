@@ -1,0 +1,156 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="row gx-4 gy-4">
+        <div class="col-lg-3 col-md-4">
+            <div class="bg-light p-4 rounded shadow-sm">
+                <h4 class="mb-4 text-primary fw-bold">Paramètres des mèmes</h4>
+                <form 
+                    id="memeForm" 
+                    method="POST" 
+                    action="{{ url_for('home_blueprint.create_meme') }}" 
+                    enctype="multipart/form-data">
+                    
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Choisissez une image</label>
+                        <input 
+                            type="file" 
+                            class="form-control" 
+                            id="image" 
+                            name="image" 
+                            accept="image/*" 
+                            required>
+                        <small class="text-muted">Formats pris en charge : JPG, PNG.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="meme_text" class="form-label">Texte du mème</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="meme_text" 
+                            name="meme_text" 
+                            placeholder="Entrez le texte" 
+                            required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="text_size" class="form-label fw-semibold">Taille du texte</label>
+                        <input 
+                            type="range" 
+                            class="form-range" 
+                            id="text_size" 
+                            name="text_size" 
+                            min="10" 
+                            max="50" 
+                            step="1" 
+                            value="20">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">10</span>
+                            <span class="text-muted">50</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="text_color" class="form-label fw-semibold">Couleur du texte</label>
+                        <input 
+                            type="color" 
+                            class="form-control form-control-color" 
+                            id="text_color" 
+                            name="text_color" 
+                            value="#ffffff">
+                    </div>
+                    <input type="hidden" id="text_x" name="text_x" value="250">
+                    <input type="hidden" id="text_y" name="text_y" value="250">
+                    <button type="submit" class="btn btn-primary w-100 mt-3">Générer un mème</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-6 col-md-8">
+            <div class="bg-white p-4 rounded shadow-sm text-center">
+                <h4 class="mb-4 text-primary fw-bold">Prévisualisez votre mème</h4>
+                <canvas id="memeCanvas" width="500" height="500" class="border rounded shadow"></canvas>
+                <div class="mt-3 text-muted">
+                    <p>Utilisez les commandes de position pour ajuster le placement de votre texte.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-4">
+            <div class="bg-light p-4 rounded shadow-sm">
+                <h4 class="mb-4 text-primary fw-bold">Contrôles de position du texte</h4>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-secondary" onclick="moveText('up')">
+                        <i class="bi bi-arrow-up"></i> Monter
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="moveText('down')">
+                        <i class="bi bi-arrow-down"></i> Descendre
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="moveText('left')">
+                        <i class="bi bi-arrow-left"></i> Gauche
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="moveText('right')">
+                        <i class="bi bi-arrow-right"></i> Droite
+                    </button>
+                </div>
+                <div class="mt-4 text-muted">
+                    <small>Astuce : utilisez ces commandes pour affiner le placement du texte sur votre image.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('memeCanvas');
+    const ctx = canvas.getContext('2d');
+    let textPosition = { x: 250, y: 250 };
+    let textSize = 20;
+    let textColor = '#ffffff';
+
+    document.getElementById('text_size').addEventListener('input', updateTextSize);
+    document.getElementById('text_color').addEventListener('input', updateTextColor);
+    document.getElementById('image').addEventListener('change', drawMeme);
+    document.getElementById('meme_text').addEventListener('input', drawMeme);
+    document.getElementById('memeForm').addEventListener('submit', handleSubmit);
+
+    function updateTextSize(e) {
+        textSize = e.target.value;
+        drawMeme();
+    }
+
+    function updateTextColor(e) {
+        textColor = e.target.value;
+        drawMeme();
+    }
+
+    function handleSubmit(e) {
+        document.getElementById('text_x').value = textPosition.x;
+        document.getElementById('text_y').value = textPosition.y;
+    }
+
+    function drawMeme() {
+        const imageInput = document.getElementById('image').files[0];
+        const memeText = document.getElementById('meme_text').value;
+
+        if (imageInput) {
+            const img = new Image();
+            img.src = URL.createObjectURL(imageInput);
+            img.onload = function () {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                ctx.font = `${textSize}px Arial`;
+                ctx.fillStyle = textColor;
+                ctx.textAlign = "center";
+                ctx.fillText(memeText, textPosition.x, textPosition.y);
+            };
+        }
+    }
+
+    function moveText(direction) {
+        const offset = 10;
+        if (direction === 'up') textPosition.y -= offset;
+        if (direction === 'down') textPosition.y += offset;
+        if (direction === 'left') textPosition.x -= offset;
+        if (direction === 'right') textPosition.x += offset;
+        drawMeme();
+    }
+</script>
+{% endblock %}
